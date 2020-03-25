@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/euclidr/prom-ngxlog-exporter/exporter"
+	"github.com/getsentry/sentry-go"
 )
 
 func main() {
@@ -31,6 +32,13 @@ func main() {
 	err = yaml.Unmarshal([]byte(confData), &cfg)
 	if err != nil {
 		panic(err)
+	}
+
+	if cfg.Sentry != nil {
+		sentry.Init(sentry.ClientOptions{
+			Dsn:   cfg.Sentry.Dsn,
+			Debug: cfg.Sentry.Debug,
+		})
 	}
 
 	sigChan := make(chan os.Signal, 1)

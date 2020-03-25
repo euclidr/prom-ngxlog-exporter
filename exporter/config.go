@@ -29,15 +29,22 @@ type AppConfig struct {
 
 // RelabelConfig tells the application how to extract a metric label value
 type RelabelConfig struct {
-	Name    string                `yaml:"name"`   // label name
-	Source  string                `yaml:"source"` // keyword in nginx log format
-	Split   int                   `yaml:"split"`  // sometimes we need onyl part of source value, we can split source value and take specific part
-	Matches []*RelabelMatchConfig `yaml:"matches"`
+	Name          string                 `yaml:"name"`   // label name
+	Source        string                 `yaml:"source"` // keyword in nginx log format
+	Split         int                    `yaml:"split"`  // sometimes we need onyl part of source value, we can split source value and take specific part
+	Preprocesses  []*RegexReplaceConfig  `yaml:"preprocess"`
+	RegexMatches  []*RegexReplaceConfig  `yaml:"regex_matches"`
+	ExcactMatches []*ExcactReplaceConfig `yaml:"exact_matches"`
 }
 
-// RelabelMatchConfig tells how to extract label value from source value
-type RelabelMatchConfig struct {
+// RegexReplaceConfig tells how to extract label value from source value
+type RegexReplaceConfig struct {
 	RegexpString string `yaml:"regexp"`      // pattern to match source value
 	Replacement  string `yaml:"replacement"` // replace pattern, like "abc_$1"
-	Forward      bool   `yaml:"forward"`     // the processor should forward to the next RelabelMatching after source value matched and replaced
+}
+
+// ExcactReplaceConfig tells how to extract label value from source value
+type ExcactReplaceConfig struct {
+	Match       string `yaml:"match"`
+	Replacement string `yaml:"replacement"`
 }

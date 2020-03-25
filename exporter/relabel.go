@@ -14,26 +14,31 @@ type RelabelMatching struct {
 	Forward        bool
 }
 
-// NewRelabelMatching create RelabelMatching object from config
-func NewRelabelMatching(cfg *RelabelMatchConfig) *RelabelMatching {
-	m := &RelabelMatching{}
+// RegexReplace match and convert value
+type RegexReplace struct {
+	CompiledRegexp *regexp.Regexp
+	Replacement    string
+}
+
+// NewRegexReplace create RegexReplace object
+func NewRegexReplace(cfg *RegexReplaceConfig) *RegexReplace {
+	rr := &RegexReplace{}
 
 	r, err := regexp.Compile(cfg.RegexpString)
 	if err != nil {
 		panic(err)
 	}
 
-	m.CompiledRegexp = r
-	m.Replacement = cfg.Replacement
-	m.Forward = cfg.Forward
+	rr.CompiledRegexp = r
+	rr.Replacement = cfg.Replacement
 
-	return m
+	return rr
 }
 
 // Convert convert source value if matched
-func (rm *RelabelMatching) Convert(before string) (matched bool, after string) {
-	if rm.CompiledRegexp.MatchString(before) {
-		after = rm.CompiledRegexp.ReplaceAllString(before, rm.Replacement)
+func (rr *RegexReplace) Convert(before string) (matched bool, after string) {
+	if rr.CompiledRegexp.MatchString(before) {
+		after = rr.CompiledRegexp.ReplaceAllString(before, rr.Replacement)
 		return true, after
 	}
 
@@ -42,10 +47,12 @@ func (rm *RelabelMatching) Convert(before string) (matched bool, after string) {
 
 // Relabeling extract label value from source value
 type Relabeling struct {
-	Name    string
-	Source  string
-	Split   int
-	Matches []*RelabelMatching
+	Name         string
+	Source       string
+	Split        int
+	Preprocesses []*RegexReplace
+	RegexMatches []*RegexReplace
+	ExactMatches map[string]string
 }
 
 // NewRelabeling create Relabeling object from config
@@ -55,16 +62,30 @@ func NewRelabeling(cfg *RelabelConfig) *Relabeling {
 	r.Source = cfg.Source
 	r.Split = cfg.Split
 
-	matches := make([]*RelabelMatching, 0)
+	if cfg.Preprocesses != nil {
+		processes := make([]*RegexReplace, 0)
+		for _, regexMatchCfg := range cfg.Preprocesses {
+			process := NewRegexReplace(regexMatchCfg)
+			processes = append(processes, process)
+		}
+		r.Preprocesses = processes
+	}
 
-	if cfg.Matches != nil {
-		for _, matchCfg := range cfg.Matches {
-			match := NewRelabelMatching(matchCfg)
-			matches = append(matches, match)
+	if cfg.ExcactMatches != nil {
+		r.ExactMatches = make(map[string]string)
+		for _, exactMatchCfg := range cfg.ExcactMatches {
+			r.ExactMatches[exactMatchCfg.Match] = exactMatchCfg.Replacement
 		}
 	}
 
-	r.Matches = matches
+	if cfg.RegexMatches != nil {
+		matches := make([]*RegexReplace, 0)
+		for _, regexMatchCfg := range cfg.RegexMatches {
+			match := NewRegexReplace(regexMatchCfg)
+			matches = append(matches, match)
+		}
+		r.RegexMatches = matches
+	}
 
 	return r
 }
@@ -86,16 +107,29 @@ func (r *Relabeling) Extract(entry *gonx.Entry) string {
 		}
 	}
 
-	for _, match := range r.Matches {
-		matched, after := match.Convert(sourceValue)
-		if !matched {
-			continue
+	if r.Preprocesses != nil {
+		for _, process := range r.Preprocesses {
+			matched, after := process.Convert(sourceValue)
+			if matched {
+				sourceValue = after
+				break
+			}
 		}
+	}
 
-		sourceValue = after
+	if r.ExactMatches != nil {
+		after, matched := r.ExactMatches[sourceValue]
+		if matched {
+			return after
+		}
+	}
 
-		if !match.Forward {
-			break
+	if r.RegexMatches != nil {
+		for _, matcher := range r.RegexMatches {
+			matched, after := matcher.Convert(sourceValue)
+			if matched {
+				return after
+			}
 		}
 	}
 
