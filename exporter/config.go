@@ -12,7 +12,7 @@ type NamespaceConfig struct {
 	Labels           []string         `yaml:"labels"`
 	Format           string           `yaml:"format"`
 	DefaultRelabels  []*RelabelConfig `yaml:"default_relabels"`
-	HistogramBuckets []float64        `yaml:"historgram_buckets"`
+	HistogramBuckets []float64        `yaml:"histogram_buckets"`
 
 	Apps []AppConfig
 }

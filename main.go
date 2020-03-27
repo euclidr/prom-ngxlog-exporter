@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gopkg.in/yaml.v2"
@@ -72,6 +73,20 @@ func main() {
 	}()
 
 	http.Handle("/metrics", promhttp.Handler())
+
+	if cfg.EnableShutdownAPI {
+		http.HandleFunc("/shutdown", func(w http.ResponseWriter, r *http.Request) {
+			// shutdown after a while
+			go func() {
+				time.Sleep(time.Millisecond * 50)
+				close(stopChan)
+				wg.Wait()
+				os.Exit(0)
+			}()
+
+			fmt.Fprintf(w, "OK")
+		})
+	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
 	fmt.Println(listenAddr)
