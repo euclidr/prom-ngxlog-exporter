@@ -7,13 +7,6 @@ import (
 	"github.com/satyrius/gonx"
 )
 
-// RelabelMatching match and convert value
-type RelabelMatching struct {
-	CompiledRegexp *regexp.Regexp
-	Replacement    string
-	Forward        bool
-}
-
 // RegexReplace match and convert value
 type RegexReplace struct {
 	CompiledRegexp *regexp.Regexp
