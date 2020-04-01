@@ -1,6 +1,6 @@
 RELEASE_DIR = dist
 TARGETS = linux-amd64 darwin-amd64
-VERSION = v0.1.0
+VERSION = v0.1.1
 APP_NAME = ngxlog-exporter
 
 OBJECTS = $(patsubst %,$(RELEASE_DIR)/$(APP_NAME)-%-$(VERSION), $(TARGETS))
