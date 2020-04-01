@@ -32,7 +32,7 @@ type RelabelConfig struct {
 	Name          string                 `yaml:"name"`   // label name
 	Source        string                 `yaml:"source"` // keyword in nginx log format
 	Split         int                    `yaml:"split"`  // sometimes we need onyl part of source value, we can split source value and take specific part
-	Preprocesses  []*RegexReplaceConfig  `yaml:"preprocess"`
+	Preprocesses  []*RegexReplaceConfig  `yaml:"preprocesses"`
 	RegexMatches  []*RegexReplaceConfig  `yaml:"regex_matches"`
 	ExcactMatches []*ExcactReplaceConfig `yaml:"exact_matches"`
 }
