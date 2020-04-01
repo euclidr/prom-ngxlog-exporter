@@ -19,7 +19,6 @@ type MockMetrics struct {
 }
 
 func (m *MockMetrics) Observe(entry *gonx.Entry, labelValues []string) {
-	fmt.Println("hahahahahahah")
 	m.Called(entry, labelValues)
 }
 
@@ -79,31 +78,30 @@ apps:
 			ngxlog:           `124.23.132.92 - - [31/Mar/2020:16:35:07 +0800] "POST /api/stat/event HTTP/1.1" 200 r:1297 s:353(-) "-" "-" (127.0.0.1:2300) 0.019 0.016 .`,
 			labels:           expectLabels,
 			values:           []string{"app1", "POST", "200", ""},
-			requestTimeValue: 0.19,
+			requestTimeValue: 0.019,
 		},
-		// {
-		// 	ngxlog:           `124.23.132.92 - - [31/Mar/2020:16:35:07 +0800] "POST /api/path/to/1?abc=dee HTTP/1.1" 200 r:1297 s:353(-) "-" "-" (127.0.0.1:2300) 0.019 0.016 .`,
-		// 	labels:           expectLabels,
-		// 	values:           []string{"app1", "POST", "200", "/path/to/1"},
-		// 	requestTimeValue: 0.19,
-		// },
-		// {
-		// 	ngxlog:           `124.23.132.92 - - [31/Mar/2020:16:35:07 +0800] "POST /api/path/to?abc=dee HTTP/1.1" 200 r:1297 s:353(-) "-" "-" (127.0.0.1:2300) 0.019 0.016 .`,
-		// 	labels:           expectLabels,
-		// 	values:           []string{"app1", "POST", "200", "/path/to"},
-		// 	requestTimeValue: 0.19,
-		// },
-		// {
-		// 	ngxlog:           `124.23.132.92 - - [31/Mar/2020:16:35:07 +0800] "POST /user/jack?abc=dee HTTP/1.1" 200 r:1297 s:353(-) "-" "-" (127.0.0.1:2300) 0.019 0.016 .`,
-		// 	labels:           expectLabels,
-		// 	values:           []string{"app1", "POST", "200", "/user/<name>"},
-		// 	requestTimeValue: 0.19,
-		// },
+		{
+			ngxlog:           `124.23.132.92 - - [31/Mar/2020:16:35:07 +0800] "POST /path/to/1?abc=dee HTTP/1.1" 200 r:1297 s:353(-) "-" "-" (127.0.0.1:2300) 0.019 0.016 .`,
+			labels:           expectLabels,
+			values:           []string{"app1", "POST", "200", "/path/to/1"},
+			requestTimeValue: 0.019,
+		},
+		{
+			ngxlog:           `124.23.132.92 - - [31/Mar/2020:16:35:07 +0800] "POST /path/to?abc=dee HTTP/1.1" 200 r:1297 s:353(-) "-" "-" (127.0.0.1:2300) 0.019 0.016 .`,
+			labels:           expectLabels,
+			values:           []string{"app1", "POST", "200", "/path/to"},
+			requestTimeValue: 0.019,
+		},
+		{
+			ngxlog:           `124.23.132.92 - - [31/Mar/2020:16:35:07 +0800] "POST /user/jack?abc=dee HTTP/1.1" 200 r:1297 s:353(-) "-" "-" (127.0.0.1:2300) 0.019 0.016 .`,
+			labels:           expectLabels,
+			values:           []string{"app1", "POST", "200", "/user/<name>"},
+			requestTimeValue: 0.019,
+		},
 	}
 
-	// MatchedBy
 	for _, test := range tests {
-		// metrics = newMetrics("api", test.labels, nsCfg.HistogramBuckets)
+		// mock metrics
 		metrics := MockMetrics{}
 		metrics.On("Observe", mock.MatchedBy(
 			func(entry *gonx.Entry) bool {
@@ -121,31 +119,27 @@ apps:
 
 		metrics.On("GetLabels").Return(test.labels)
 
+		// set log path
 		file, _ := ioutil.TempFile("", "test_exporter")
 		nsCfg.Apps[0].SourceFiles[0] = file.Name()
 
 		ns := NewNamespaceWithMetrics(*nsCfg, &metrics)
 
 		stopChan := make(chan bool)
-
 		go ns.StartObserve(stopChan)
 
-		file.Write([]byte(test.ngxlog))
-		// fmt.Println("to write", test.ngxlog)
-		// fmt.Println("write error", e)
+		// wait for the follower
+		time.Sleep(time.Millisecond * 50)
+
+		// write log to file
+		file.Write([]byte(fmt.Sprintf("%s\n", test.ngxlog)))
 		file.Sync()
 		file.Close()
 
-		time.Sleep(time.Millisecond * 5000)
-
-		dx, _ := os.Open(file.Name())
-		byts := make([]byte, 0)
-		dx.Read(byts)
-		fmt.Println("readed", string(byts))
-
+		// wait for observer to get the new log
+		time.Sleep(time.Millisecond * 200)
 		close(stopChan)
-
-		// os.Remove(file.Name())
+		os.Remove(file.Name())
 
 		metrics.AssertNumberOfCalls(t, "Observe", 1)
 		metrics.AssertNumberOfCalls(t, "GetLabels", 1)
