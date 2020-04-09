@@ -1,5 +1,4 @@
 # prom-ngxlog-exporter
-----------
 
 [![Build Status](https://travis-ci.com/euclidr/prom-ngxlog-exporter.svg?branch=master)](https://travis-ci.com/euclidr/prom-ngxlog-exporter)
 [![codecov](https://codecov.io/gh/euclidr/prom-ngxlog-exporter/branch/master/graph/badge.svg)](https://codecov.io/gh/euclidr/prom-ngxlog-exporter)
