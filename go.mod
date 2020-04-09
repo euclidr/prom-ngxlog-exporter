@@ -1,6 +1,6 @@
 module github.com/euclidr/prom-ngxlog-exporter
 
-go 1.13
+go 1.12
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
