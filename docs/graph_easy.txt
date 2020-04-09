@@ -1,0 +1,3 @@
+graph{flow:south}[ source value ] - split \> 0 -> [split by space \nget the Nth part] -> [ preprocess ] - result -> [ exact match and replace ] - not matched -> [ regex match and replace ] -> [ got the value ]
+[ source value ] - split = 0 -> [ preprocess ]
+[ exact match and replace ] - matched -> [ got the value ]
