@@ -1,4 +1,9 @@
 # prom-ngxlog-exporter
+----------
+
+[![Build Status](https://travis-ci.com/euclidr/prom-ngxlog-exporter.svg?branch=master)](https://travis-ci.com/euclidr/prom-ngxlog-exporter)
+[![codecov](https://codecov.io/gh/euclidr/prom-ngxlog-exporter/branch/master/graph/badge.svg)](https://codecov.io/gh/euclidr/prom-ngxlog-exporter)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/euclidr/prom-ngxlog-exporter)
 
 Export request metrics from Nginx access log
 
